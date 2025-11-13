@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Website</title>
+</head>
+<body>
+  <h1>Hello! Welcome to Mochi!</h1>
+</body>
+</html> 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Mochi</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body class="theme-dark">
+  <!-- LOADING SCREEN -->
+  <div id="loading" class="overlay center">
+    <div class="hearts">
+      <span class="heart">💗</span>
+      <span class="heart">💗</span>
+      <span class="heart">💗</span>
+    </div>
+    <div class="loading-text">loading <span id="dots"></span></div>
+  </div>
+
+  <!-- ERROR SCREEN -->
+  <div id="errorScreen" class="overlay center hidden">
+    <div class="error-emoji">🤨</div>
+    <h2>Oh darn — something went wrong</h2>
+    <p>So sorry for the inconvenience. Try reloading your screen.</p>
+    <button id="reloadBtn" class="btn pink">Reload</button>
+  </div>
+
+  <!-- MAIN SITE -->
+  <header class="topbar">
+    <div class="logo-area">
+      <img id="logoImg" alt="Mochi logo (upload below)" src="" hidden />
+      <h1 id="siteTitle">Mochi</h1>
+    </div>
+    <div class="controls">
+      <label class="file-input">
+        Upload logo
+        <input id="logoUpload" type="file" accept="image/*" />
+      </label>
+      <button id="signOutBtn" class="btn">Sign out</button>
+    </div>
+  </header>
+
+  <main class="container">
+    <!-- LOGIN / AGE GATE -->
+    <section id="signin" class="card center">
+      <h2>Welcome to Mochi</h2>
+      <p class="muted">A friendly community — black & pink indie vibe</p>
+
+      <input id="username" placeholder="Display name" />
+      <input id="age" type="number" placeholder="Your age (e.g. 16)" min="10" />
+      <div class="row">
+        <label><input id="consent" type="checkbox" /> I agree to the rules & privacy</label>
+      </div>
+      <button id="enterBtn" class="btn pink">Enter Mochi</button>
+
+      <small class="muted">
+        Note: This demo saves messages in your browser (no server). For real moderation, add a
+        server endpoint.
+      </small>
+    </section>
+
+    <!-- APP -->
+    <section id="app" class="hidden">
+      <aside class="sidebar card">
+        <div class="user-info">
+          <div id="avatar" class="avatar">M</div>
+          <div>
+            <div id="displayName"></div>
+            <div id="displayAge" class="muted small"></div>
+          </div>
+        </div>
+
+        <nav class="nav">
+          <button class="navBtn" data-view="feed">Feed</button>
+          <button class="navBtn" data-view="dm">Messages (DM)</button>
+          <button class="navBtn" data-view="settings">Settings</button>
+        </nav>
+
+        <div class="safety">
+          <h4>Safety</h4>
+          <label><input id="toggleStrict" type="checkbox" /> Strict filter (under 18)</label>
+        </div>
+      </aside>
+
+      <section class="content card" id="feedView">
+        <h2>Public Feed</h2>
+        <div id="feedList" class="messages"></div>
+
+        <div class="composer">
+          <input id="messageInput" placeholder="Share something to the feed..." />
+          <button id="sendFeed" class="btn pink">Send</button>
+        </div>
+      </section>
+
+      <section class="content card hidden" id="dmView">
+        <h2>Direct Messages</h2>
+        <div class="dm-layout">
+          <div class="dm-list">
+            <div id="contacts"></div>
+            <button id="newDM" class="btn">+ New DM</button>
+          </div>
+          <div class="dm-window">
+            <div id="dmMessages" class="messages"></div>
+            <div class="composer">
+              <input id="dmInput" placeholder="Write a private message..." />
+              <button id="sendDM" class="btn pink">Send DM</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="content card hidden" id="settingsView">
+        <h2>Settings</h2>
+        <label>Moderation webhook (admin notifications)</label>
+        <input id="webhook" placeholder="https://yourserver.example/api/notify" />
+        <p class="muted">Messages flagged will POST to this URL with details (implement on your server).</p>
+      </section>
+    </section>
+  </main>
+
+  <footer class="footer muted">© Mochi — indie blend • Theme: black & pink</footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
+
