@@ -1,0 +1,710 @@
+// Basic client-side starter app with moderation hooks and age-based rules.
+// NOTE: This is a demo. For real safety, do checks server-side and store messages in a DB.
+
+const MIN_AGE = 10;
+const local = { messages: [], dms: {}, users: {} };
+
+const ui = {
+  loading: document.getElementById('loading'),
+  loadingDots: document.getElementById('dots'),
+  errorScreen: document.getElementById('errorScreen'),
+  reloadBtn: document.getElementById('reloadBtn'),
+  signin: document.getElementById('signin'),
+  app: document.getElementById('app'),
+  enterBtn: document.getElementById('enterBtn'),
+  username: document.getElementById('username'),
+  age: document.getElementById('age'),
+  consent: document.getElementById('consent'),
+  displayName: document.getElementById('displayName'),
+  displayAge: document.getElementById('displayAge'),
+  feedList: document.getElementById('feedList'),
+  messageInput: document.getElementById('messageInput'),
+  sendFeed: document.getElementById('sendFeed'),
+  dmInput: document.getElementById('dmInput'),
+  sendDM: document.getElementById('sendDM'),
+  contacts: document.getElementById('contacts'),
+  dmMessages: document.getElementById('dmMessages'),
+  webhook: document.getElementById('webhook'),
+  toggleStrict: document.getElementById('toggleStrict'),
+  logoUpload: document.getElementById('logoUpload'),
+  logoImg: document.getElementById('logoImg'),
+  siteTitle: document.getElementById('siteTitle'),
+  signOutBtn: document.getElementById('signOutBtn'),
+  navBtns: document.querySelectorAll('.navBtn'),
+  views: { feed: document.getElementById('feedView'), dm: document.getElementById('dmView'), settings: document.getElementById('settingsView') }
+};
+
+// small starter profanity list (example). Expand or replace with a server-side list.
+// WARNING: You asked to ban offensive words in all languages. That's impossible to guarantee in client code;
+// use third-party lists + ML moderation on server (Perspective API, etc.).
+const bannedWords = new Set([
+  // original examples
+  'fuck','shit','bitch','cunt','nigger','motherfucker',
+  // expanded list
+    'arse',
+    'arsehead',
+    'arsehole',
+    'ass',
+    'ass hole',
+    'asshole',
+    'bastard',
+    'bloody',
+    'bollocks',
+    'brotherfucker',
+    'bugger',
+    'bullshit',
+    'child-fucker',
+    'christ on a bike',
+    'christ on a cracker',
+    'cock',
+    'cocksucker',
+    'crap',
+    'dammit',
+    'damn',
+    'damned',
+    'damn it',
+    'dick',
+    'dick-head',
+    'dickhead',
+    'dumb ass',
+    'dumb-ass',
+    'dumbass',
+    'dyke',
+    'fag',
+    'faggot',
+    'father-fucker',
+    'fatherfucker',
+    'fucked',
+    'fucker',
+    'fucking',
+    'god dammit',
+    'goddammit',
+    'god damn',
+    'goddamn',
+    'goddamned',
+    'goddamnit',
+    'godsdamn',
+    'hell',
+    'holy shit',
+    'horseshit',
+    'in shit',
+    'jackarse',
+    'jack-ass',
+    'jackass',
+    'jesus christ',
+    'jesus fuck',
+    'jesus harold christ',
+    'jesus h. christ',
+    'jesus, mary and joseph',
+    'jesus wept',
+    'kike',
+    'mental',
+    'mother fucker',
+    'nigga',
+    'nigra',
+    'pigfucker',
+    'piss',
+    'prick',
+    'pussy',
+    'shit ass',
+    'shite',
+    'sibling fucker',
+    'sisterfuck',
+    'sisterfucker',
+    'slut',
+    'son of a bitch',
+    'son of a whore',
+    'spastic',
+    'sweet jesus',
+    'tranny',
+    'twat',
+    'wanker'
+     '2g1c'
+   2 girls 1 cup
+  acrotomophilia
+alabama hot pocket
+alaskan pipeline
+anal
+anilingus
+anus
+apeshit
+arsehole
+ass
+asshole
+assmunch
+auto erotic
+autoerotic
+babeland
+baby batter
+baby juice
+ball gag
+ball gravy
+ball kicking
+ball licking
+ball sack
+ball sucking
+bangbros
+bangbus
+bareback
+barely legal
+barenaked
+bastard
+bastardo
+bastinado
+bbw
+bdsm
+beaner
+beaners
+beaver cleaver
+beaver lips
+beastiality
+bestiality
+big black
+big breasts
+big knockers
+big tits
+bimbos
+birdlock
+bitch
+bitches
+black cock
+blonde action
+blonde on blonde action
+blowjob
+blow job
+blow your load
+blue waffle
+blumpkin
+bollocks
+bondage
+boner
+boob
+boobs
+booty call
+brown showers
+brunette action
+bukkake
+bulldyke
+bullet vibe
+bullshit
+bung hole
+bunghole
+busty
+butt
+buttcheeks
+butthole
+camel toe
+camgirl
+camslut
+camwhore
+carpet muncher
+carpetmuncher
+chocolate rosebuds
+cialis
+circlejerk
+cleveland steamer
+clit
+clitoris
+clover clamps
+clusterfuck
+cock
+cocks
+coprolagnia
+coprophilia
+cornhole
+coon
+coons
+creampie
+cum
+cumming
+cumshot
+cumshots
+cunnilingus
+cunt
+darkie
+date rape
+daterape
+deep throat
+deepthroat
+dendrophilia
+dick
+dildo
+dingleberry
+dingleberries
+dirty pillows
+dirty sanchez
+doggie style
+doggiestyle
+doggy style
+doggystyle
+dog style
+dolcett
+domination
+dominatrix
+dommes
+donkey punch
+double dong
+double penetration
+dp action
+dry hump
+dvda
+eat my ass
+ecchi
+ejaculation
+erotic
+erotism
+escort
+eunuch
+fag
+faggot
+fecal
+felch
+fellatio
+feltch
+female squirting
+femdom
+figging
+fingerbang
+fingering
+fisting
+foot fetish
+footjob
+frotting
+fuck
+fuck buttons
+fuckin
+fucking
+fucktards
+fudge packer
+fudgepacker
+futanari
+gangbang
+gang bang
+gay sex
+genitals
+giant cock
+girl on
+girl on top
+girls gone wild
+goatcx
+goatse
+god damn
+gokkun
+golden shower
+goodpoop
+goo girl
+goregasm
+grope
+group sex
+g-spot
+guro
+hand job
+handjob
+hard core
+hardcore
+hentai
+homoerotic
+honkey
+hooker
+horny
+hot carl
+hot chick
+how to kill
+how to murder
+huge fat
+humping
+incest
+intercourse
+jack off
+jail bait
+jailbait
+jelly donut
+jerk off
+jigaboo
+jiggaboo
+jiggerboo
+jizz
+juggs
+kike
+kinbaku
+kinkster
+kinky
+knobbing
+leather restraint
+leather straight jacket
+lemon party
+livesex
+lolita
+lovemaking
+make me come
+male squirting
+masturbate
+masturbating
+masturbation
+menage a trois
+milf
+missionary position
+mong
+motherfucker
+mound of venus
+mr hands
+muff diver
+muffdiving
+nambla
+nawashi
+negro
+neonazi
+nigga
+nigger
+nig nog
+nimphomania
+nipple
+nipples
+nsfw
+nsfw images
+nude
+nudity
+nutten
+nympho
+nymphomania
+octopussy
+omorashi
+one cup two girls
+one guy one jar
+orgasm
+orgy
+paedophile
+paki
+panties
+panty
+pedobear
+pedophile
+pegging
+penis
+phone sex
+piece of shit
+pikey
+pissing
+piss pig
+pisspig
+playboy
+pleasure chest
+pole smoker
+ponyplay
+poof
+poon
+poontang
+punany
+poop chute
+poopchute
+porn
+porno
+pornography
+prince albert piercing
+pthc
+pubes
+pussy
+queaf
+queef
+quim
+raghead
+raging boner
+rape
+raping
+rapist
+rectum
+reverse cowgirl
+rimjob
+rimming
+rosy palm
+rosy palm and her 5 sisters
+rusty trombone
+sadism
+santorum
+scat
+schlong
+scissoring
+semen
+sex
+sexcam
+sexo
+sexy
+sexual
+sexually
+sexuality
+shaved beaver
+shaved pussy
+shemale
+shibari
+shit
+shitblimp
+shitty
+shota
+shrimping
+skeet
+slanteye
+slut
+s&m
+smut
+snatch
+snowballing
+sodomize
+sodomy
+spastic
+spic
+splooge
+splooge moose
+spooge
+spread legs
+spunk
+strap on
+strapon
+strappado
+strip club
+style doggy
+suck
+sucks
+suicide girls
+sultry women
+swastika
+swinger
+tainted love
+taste my
+tea bagging
+threesome
+throating
+thumbzilla
+tied up
+tight white
+tit
+tits
+titties
+titty
+tongue in a
+topless
+tosser
+towelhead
+tranny
+tribadism
+tub girl
+tubgirl
+tushy
+twat
+twink
+twinkie
+two girls one cup
+undressing
+upskirt
+urethra play
+urophilia
+vagina
+venus mound
+viagra
+vibrator
+violet wand
+vorarephilia
+voyeur
+voyeurweb
+voyuer
+vulva
+wank
+wetback
+wet dream
+white power
+whore
+worldsex
+wrapping men
+wrinkled starfish
+xx
+xxx
+yaoi
+yellow showers
+yiffy
+zoophilia
+🖕
+]);
+
+// Utility: naive word check (word boundaries). Use server-side for production.
+function containsBanned(text, strict=false){
+  if(!text) return false;
+  const lower = text.toLowerCase();
+  for(const w of bannedWords){
+    // Escape special regex characters in the banned word and ensure word boundaries
+    const re = new RegExp('\\b' + w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + '\\b','i');
+    if(re.test(lower)) return true;
+    
+    // Special handling for multi-word phrases that might not be captured by simple \b (e.g., "ass hole")
+    // Note: The original regex for single words with \b is usually sufficient, 
+    // but for multi-word phrases in the set like 'ass hole', a simple .includes() check is sometimes needed
+    // alongside the more robust word-boundary check for single words.
+    // For simplicity and adherence to the user's base code, we rely on the \b regex, 
+    // which *should* match multi-word entries if the spaces are not escaped.
+    // However, the current regex *does* escape spaces, so 'ass hole' would only match 'ass hole' exactly.
+    // A quick includes() is more reliable for multi-word entries in a simple filter.
+    if (w.includes(' ') && lower.includes(w)) { return true; }
+  }
+  // additional strict heuristics
+  if(strict){
+    // block short suspicious sequences or leetspeak heuristics (basic)
+    if(/[\*\@\#\$\%\^]/.test(lower)) return true;
+  }
+  return false;
+}
+
+// Admin notification (POST to webhookURL). Implement server endpoint to receive and act.
+async function notifyAdmin(payload){
+  const url = ui.webhook.value.trim();
+  if(!url) { console.warn('No webhook set. Flagged:', payload); return; }
+  try{
+    await fetch(url, {
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body: JSON.stringify(payload)
+    });
+  }catch(e){
+    console.error('Failed to notify admin', e);
+  }
+}
+
+// render helpers
+function renderFeed(){
+  ui.feedList.innerHTML = '';
+  for(const m of local.messages.slice().reverse()){
+    const el = document.createElement('div');
+    el.className = 'msg ' + (m.from === local.me ? 'me' : 'other');
+    el.innerHTML = `<strong>${m.from}</strong><div>${escapeHtml(m.text)}</div><small class="muted">${new Date(m.time).toLocaleString()}</small>`;
+    ui.feedList.appendChild(el);
+  }
+}
+
+function renderDMs(){
+  ui.contacts.innerHTML = '';
+  for(const user of Object.keys(local.dms)){
+    const btn = document.createElement('button');
+    btn.className = 'btn';
+    btn.textContent = user;
+    btn.onclick = ()=>openDM(user);
+    ui.contacts.appendChild(btn);
+  }
+}
+
+function openDM(user){
+  local.currentDM = user;
+  renderDMWindow();
+}
+
+function renderDMWindow(){
+  ui.dmMessages.innerHTML = '';
+  const conv = local.dms[local.currentDM] || [];
+  for(const m of conv){
+    const el = document.createElement('div');
+    el.className = 'msg ' + (m.from === local.me ? 'me' : 'other');
+    el.innerHTML = `<strong>${m.from}</strong><div>${escapeHtml(m.text)}</div><small class="muted">${new Date(m.time).toLocaleString()}</small>`;
+    ui.dmMessages.appendChild(el);
+  }
+}
+
+// escape
+function escapeHtml(s){ return (s+'').replace(/[&<>"']/g,c=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' })[c]); }
+
+// events
+ui.enterBtn.addEventListener('click', ()=>{
+  const name = ui.username.value.trim() || 'Anonymous';
+  const age = parseInt(ui.age.value,10);
+  if(!ui.consent.checked){ alert('Please agree to the rules.'); return; }
+  if(!age || age < MIN_AGE){ alert('You must be ' + MIN_AGE + '+ to use Mochi.'); return; }
+  local.me = name;
+  local.age = age;
+  ui.displayName.textContent = name;
+  ui.displayAge.textContent = `${age} years old`;
+  ui.signin.classList.add('hidden');
+  ui.app.classList.remove('hidden');
+  if(age < 18){ ui.toggleStrict.checked = true; }
+  ui.loading.classList.add('hidden');
+  renderFeed();
+  renderDMs();
+});
+
+ui.sendFeed.addEventListener('click', ()=> {
+  const text = ui.messageInput.value.trim();
+  if(!text) return;
+  const strict = ui.toggleStrict.checked || local.age < 18;
+  if(containsBanned(text, strict)){
+    alert('Your message was blocked by moderation.');
+    notifyAdmin({type:'flag',reason:'banned_word',user:local.me,text});
+    return;
+  }
+  const msg = {from:local.me,text,time:Date.now()};
+  local.messages.push(msg);
+  // TODO: send to server here
+  ui.messageInput.value='';
+  renderFeed();
+});
+
+ui.sendDM.addEventListener('click', ()=>{
+  const target = local.currentDM;
+  if(!target){ alert('Select a contact or create new DM.'); return; }
+  const text = ui.dmInput.value.trim();
+  if(!text) return;
+  const strict = ui.toggleStrict.checked || (local.age < 18);
+  if(containsBanned(text, strict)){
+    alert('Your private message was blocked by moderation.');
+    notifyAdmin({type:'flag',reason:'banned_word_dm',user:local.me,target,text});
+    return;
+  }
+  // store locally
+  if(!local.dms[target]) local.dms[target]=[];
+  local.dms[target].push({from:local.me,text,time:Date.now()});
+  ui.dmInput.value='';
+  renderDMWindow();
+  // For real privacy: you MUST route messages through your server with encryption/auth.
+});
+
+// Assuming 'newDM' button existed in the HTML, or it's a piece of code that was intended to be included:
+/*
+ui.newDM.addEventListener('click', ()=>{
+  const name = prompt('Enter the username to DM:');
+  if(!name) return;
+  if(!local.dms[name]) local.dms[name]=[];
+  openDM(name);
+  renderDMs();
+});
+*/
+
+ui.reloadBtn.addEventListener('click', ()=>location.reload());
+ui.signOutBtn.addEventListener('click', ()=>location.reload());
+
+ui.logoUpload.addEventListener('change', (e)=>{
+  const f = e.target.files[0];
+  if(!f) return;
+  const url = URL.createObjectURL(f);
+  ui.logoImg.src = url; ui.logoImg.hidden = false;
+  ui.siteTitle.style.display='inline-block';
+});
+
+for(const btn of ui.navBtns){
+  btn.addEventListener('click', ()=> {
+    const view = btn.dataset.view;
+    Object.values(ui.views).forEach(v=>v.classList.add('hidden'));
+    if(view==='feed') ui.views.feed.classList.remove('hidden');
+    if(view==='dm') ui.views.dm.classList.remove('hidden');
+    if(view==='settings') ui.views.settings.classList.remove('hidden');
+  });
+}
+
+// Loading animation dots
+let dots=0;
+setInterval(()=>{ dots=(dots+1)%4; ui.loadingDots.textContent='.'.repeat(dots); },400);
+
+// Simulate initial hide after 1s
+setTimeout(()=>{ ui.loading.classList.add('hidden'); }, 1000);
+
+// Basic error simulation function (call to show error screen)
+function showError(msg){
+  document.querySelector('#errorScreen h2').textContent = msg || 'Oh darn — something went wrong';
+  ui.errorScreen.classList.remove('hidden');
+}
+window.showError = showError;
+
+// Expose some things for debugging
+window.MochiLocal = local;
